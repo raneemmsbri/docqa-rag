@@ -52,10 +52,7 @@ def generate_unique_filepath(orig_file_name: str, project_id: str):
 
 
 def find_file_path(file_id: str, project_id: str) -> str:
-    """
-    بندور على الملف جوا مجلد المشروع، لأن الـ file_id بيتخزن
-    من غير معرفة المسار الكامل مسبقاً.
-    """
+    
     project_dir = get_project_upload_dir(project_id)
     file_path = os.path.join(project_dir, file_id)
     return file_path 
