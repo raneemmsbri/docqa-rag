@@ -22,7 +22,6 @@ settings = get_settings()
 
 
 # ---------------------------------------------------------------------------
-# 1. تحميل الملف حسب نوعه (نفس فكرة get_file_loader في mini-rag)
 # ---------------------------------------------------------------------------
 def load_document(file_path: str) -> List[Document]:
     file_ext = os.path.splitext(file_path)[-1].lower()
@@ -38,7 +37,6 @@ def load_document(file_path: str) -> List[Document]:
 
 
 # ---------------------------------------------------------------------------
-# 2. تقسيم النص لقطع صغيرة (chunks)
 # ---------------------------------------------------------------------------
 def split_document(
     documents: List[Document],
@@ -54,7 +52,6 @@ def split_document(
 
 
 # ---------------------------------------------------------------------------
-# 3. عمل Vector Store (Chroma) لكل ملف لوحده، عشان نقدر نبحث بس جوا ملف معين
 # ---------------------------------------------------------------------------
 def get_vectorstore_path(file_id: str) -> str:
     return os.path.join(settings.CHROMA_DIR, file_id)
@@ -88,7 +85,6 @@ def load_vectorstore(file_id: str) -> Optional[Chroma]:
 
 
 # ---------------------------------------------------------------------------
-# 4. الـ Prompt اللي بيمنع الموديل يجاوب من معرفته العامة (guardrail بسيط)
 # ---------------------------------------------------------------------------
 QA_PROMPT_TEMPLATE = """أنت مساعد بيجاوب على أسئلة بناءً على المستندات المرفوعة فقط.
 استخدم المعلومات الموجودة في السياق التالي فقط للإجابة.
@@ -112,7 +108,6 @@ def _format_docs(docs: List[Document]) -> str:
 
 
 # ---------------------------------------------------------------------------
-# 5. بناء وتنفيذ سلسلة الإجابة بطريقة LCEL الحديثة
 # ---------------------------------------------------------------------------
 def answer_question(
     file_id: str, question: str, top_k: int = None
@@ -126,8 +121,6 @@ def answer_question(
         search_kwargs={"k": top_k or settings.RETRIEVAL_TOP_K}
     )
 
-    # بنجيب المستندات المرتبطة الأول لوحدها، عشان نقدر نرجعها كمصادر
-    # (بدل ما نعتمد بس على الـ chain وهو بيخفي التفاصيل دي)
     retrieved_docs = retriever.invoke(question)
 
     llm = ChatGroq(
@@ -136,8 +129,7 @@ def answer_question(
         groq_api_key=settings.GROQ_API_KEY,
     )
     
-    # سلسلة LCEL: بناخد الـ context والسؤال، نبنيهم في الـ prompt،
-    # نبعتهم للموديل، وناخد الرد كـ نص عادي
+    
     chain = QA_PROMPT | llm | StrOutputParser()
 
     answer_text = chain.invoke(
